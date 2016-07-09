@@ -28,16 +28,18 @@ function TadoAccessory(log, config) {
 }
 
 TadoAccessory.prototype.getServices = function() {
-    var minValue = 18;
-    var maxValue = 30;
+    var minValue = 5;
+    var maxValue = 25;
 
     if (this.useFahrenheit) {
-        minValue = 60;
-        maxValue = 85;
+        minValue = 40;
+        maxValue = 80;
     }
 
     this.log("Minimum setpoint " + minValue);
     this.log("Maximum setpoint " + maxValue);
+
+    this.targetTemp = minValue;
 
 
     var informationService = new Service.AccessoryInformation()
@@ -115,12 +117,14 @@ TadoAccessory.prototype.getCurrentHeatingCoolingState = function(callback) {
 
             accessory.zoneType = obj.setting.type;
 
-            if (accessory.useFahrenheit) {
-                accessory.log("Target temperature is " + obj.setting.temperature.fahrenheit + "ºF");
-                accessory.targetTemp = obj.setting.temperature.fahrenheit;
-            } else {
-                accessory.log("Target temperature is " + obj.setting.temperature.celsius + "ºC");
-                accessory.targetTemp = obj.setting.temperature.celsius;
+            if (obj.setting.temperature != null) {
+                if (accessory.useFahrenheit) {
+                    accessory.log("Target temperature is " + obj.setting.temperature.fahrenheit + "ºF");
+                    accessory.targetTemp = obj.setting.temperature.fahrenheit;
+                } else {
+                    accessory.log("Target temperature is " + obj.setting.temperature.celsius + "ºC");
+                    accessory.targetTemp = obj.setting.temperature.celsius;
+                }
             }
 
             if (JSON.stringify(obj.setting.power).match("OFF")) {
@@ -155,29 +159,33 @@ TadoAccessory.prototype.getTargetHeatingCoolingState = function(callback) {
         response.on('end', function() {
             var obj = JSON.parse(str);
 
-            if (accessory.useFahrenheit) {
-                accessory.log("Target temperature is " + obj.setting.temperature.fahrenheit + "ºF");
-                accessory.targetTemp = obj.setting.temperature.fahrenheit;
-            } else {
-                accessory.log("Target temperature is " + obj.setting.temperature.celsius + "ºC");
-                accessory.targetTemp = obj.setting.temperature.celsius;
+            if (obj.setting.temperature != null) {
+                if (accessory.useFahrenheit) {
+                    accessory.log("Target temperature is " + obj.setting.temperature.fahrenheit + "ºF");
+                    accessory.targetTemp = obj.setting.temperature.fahrenheit;
+                } else {
+                    accessory.log("Target temperature is " + obj.setting.temperature.celsius + "ºC");
+                    accessory.targetTemp = obj.setting.temperature.celsius;
+                }
             }
 
-            if (JSON.stringify(obj.setting.power).match("OFF")) {
-                 accessory.log("Target operating state is OFF");
-                 
-               callback(null, Characteristic.TargetHeatingCoolingState.OFF);
-            } else if (obj.overlay == null) {
+            if (obj.overlay == null) {
                 accessory.log("Target operating state is AUTO");
                  
                 callback(null, Characteristic.TargetHeatingCoolingState.AUTO);
             } else {
-                accessory.log("Target operating state is " + obj.overlay.setting.type);
-                 
-                if (JSON.stringify(obj.overlay.setting.type).match("HEATING")) {
-                    callback(null, Characteristic.TargetHeatingCoolingState.HEAT);
+                if (JSON.stringify(obj.overlay.setting.power).match("OFF")) {
+                    accessory.log("Target operating state is OFF");
+                    
+                    callback(null, Characteristic.TargetHeatingCoolingState.OFF);
                 } else {
-                    callback(null, Characteristic.TargetHeatingCoolingState.COOL);
+                    accessory.log("Target operating state is " + obj.overlay.setting.type);
+                    
+                    if (JSON.stringify(obj.overlay.setting.type).match("HEATING")) {
+                        callback(null, Characteristic.TargetHeatingCoolingState.HEAT);
+                    } else {
+                        callback(null, Characteristic.TargetHeatingCoolingState.COOL);
+                    }
                 }
             }
         });
@@ -267,6 +275,13 @@ TadoAccessory.prototype.getTargetTemperature = function(callback) {
         //the whole response has been recieved, so we just print it out here
         response.on('end', function() {
             var obj = JSON.parse(str);
+
+            if (obj.setting.temperature == null) {
+                    accessory.log("Target temperature is unavailable");
+
+                    callback(null, accessory.targetTemp);
+                    return;
+            }
 
             if (accessory.useFahrenheit) {
                     accessory.log("Target temperature is " + obj.setting.temperature.fahrenheit + "ºF");
