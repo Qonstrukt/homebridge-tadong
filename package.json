@@ -1,6 +1,6 @@
 {
   "name": "homebridge-tadong",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Tado plugin for homebridge: https://github.com/Qonstrukt/homebridge-tadong",
   "license": "MIT",
   "keywords": [
