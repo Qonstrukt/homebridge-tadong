@@ -21,6 +21,7 @@ function TadoAccessory(log, config) {
     this.homeID = config['homeID'];
     this.username = config['username'];
     this.password = config['password'];
+	this.zone = config['zone'];
     this.useFahrenheit = config['useFahrenheit'];
 
     this.targetTemp = 0;
@@ -349,7 +350,7 @@ TadoAccessory.prototype._getCurrentStateResponse = function(callback) {
 
     var options = {
         host: 'my.tado.com',
-        path: '/api/v2/homes/' + accessory.homeID + '/zones/1/state?username=' + accessory.username + '&password=' + accessory.password
+        path: '/api/v2/homes/' + accessory.homeID + '/zones/' + accessory.zone + '/state?username=' + accessory.username + '&password=' + accessory.password
     };
 
     https.request(options, callback).end();
@@ -361,7 +362,7 @@ TadoAccessory.prototype._setOverlay = function(body) {
     
     var options = {
         host: 'my.tado.com',
-        path: '/api/v2/homes/' + accessory.homeID + '/zones/1/overlay?username=' + accessory.username + '&password=' + accessory.password,
+        path: '/api/v2/homes/' + accessory.homeID + '/zones/' + accessory.zone + '/overlay?username=' + accessory.username + '&password=' + accessory.password,
         method: body == null ? 'DELETE' : 'PUT'
     };
     
